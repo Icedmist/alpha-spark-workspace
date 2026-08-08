@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Sparkles, Mail, Lock, User, LogIn, ArrowRight } from 'lucide-react';
+import { X, Sparkles, Mail, Lock, User, LogIn, ArrowRight, ShieldAlert, KeyRound } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface AuthModalProps {
@@ -42,6 +42,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleQuickLogin = (presetEmail: string, presetName: string) => {
+    setEmail(presetEmail);
+    setPassword('Password123!');
+    setDisplayName(presetName);
+  };
+
   const handleGoogle = async () => {
     setError('');
     try {
@@ -53,7 +59,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in">
       <div className="relative w-full max-w-md bg-[#1A1A2E]/95 border border-[#E85D04]/30 rounded-3xl p-8 shadow-2xl overflow-hidden">
         {/* Decorative background glow */}
         <div className="absolute -top-20 -right-20 w-48 h-48 bg-[#E85D04]/20 rounded-full blur-3xl pointer-events-none" />
@@ -77,8 +83,33 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               {isSignUp ? 'Join Alpha Spark' : 'Sign In'}
             </h2>
             <p className="text-xs text-slate-400">
-              AminApps Real Authentication Protocol
+              AminApps Real Auth & Permissions Protocol
             </p>
+          </div>
+        </div>
+
+        {/* Quick Super Admin Logins */}
+        <div className="mb-6 p-3 rounded-2xl bg-gradient-to-r from-[#E85D04]/10 to-[#0099CC]/10 border border-[#E85D04]/30">
+          <div className="flex items-center gap-2 mb-2 text-xs font-bold text-[#E85D04] uppercase tracking-wider">
+            <KeyRound className="w-3.5 h-3.5" />
+            <span>Pre-Seeded Accounts</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => handleQuickLogin('talk2icedmist@gmail.com', 'Snow (Icedmist)')}
+              className="px-2.5 py-1.5 bg-[#E85D04]/20 hover:bg-[#E85D04]/30 border border-[#E85D04]/40 rounded-xl text-[11px] font-bold text-white text-left transition flex items-center gap-1.5"
+            >
+              <ShieldAlert className="w-3.5 h-3.5 text-[#E85D04]" />
+              <span className="truncate">Super Admin</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickLogin('fatima@alphaspark.org', 'Fatima Al-Hassan')}
+              className="px-2.5 py-1.5 bg-[#0099CC]/20 hover:bg-[#0099CC]/30 border border-[#0099CC]/40 rounded-xl text-[11px] font-bold text-white text-left transition"
+            >
+              <span className="truncate">Directorate Lead</span>
+            </button>
           </div>
         </div>
 
@@ -99,7 +130,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 <input
                   type="text"
                   required
-                  placeholder="Amina Bello"
+                  placeholder="Snow (Icedmist)"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-950/60 border border-slate-800 focus:border-[#E85D04] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none transition"
@@ -117,7 +148,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               <input
                 type="email"
                 required
-                placeholder="name@alphaspark.org"
+                placeholder="talk2icedmist@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-950/60 border border-slate-800 focus:border-[#E85D04] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none transition"
