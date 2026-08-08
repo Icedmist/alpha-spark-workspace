@@ -40,16 +40,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let match = existingUsers.find((u) => u.email?.toLowerCase() === fbUser.email?.toLowerCase());
 
         if (!match) {
-          match = {
+          const newUser: WorkspaceUser = {
             id: fbUser.uid,
+            workspaceId: 'ws-alpha-spark',
             displayName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Member',
             email: fbUser.email || '',
-            avatarUrl: fbUser.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${fbUser.uid}`,
-            role: 'member',
-            directorateId: 'dir-exec',
+            avatarUrl: fbUser.photoURL || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80`,
+            role: fbUser.email?.toLowerCase() === 'talk2icedmist@gmail.com' ? 'super_admin' : 'member',
+            directorateIds: ['dir-[#1A1A2E]'],
             title: 'Workspace Member',
           };
-          WorkspaceStorageService.saveUser(match);
+          WorkspaceStorageService.saveUser(newUser);
+          match = newUser;
         }
         setUserProfile(match);
       } else {
@@ -71,11 +73,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await updateProfile(res.user, { displayName: name });
       const newUser: WorkspaceUser = {
         id: res.user.uid,
+        workspaceId: 'ws-alpha-spark',
         displayName: name,
         email,
-        avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${res.user.uid}`,
-        role: 'member',
-        directorateId: 'dir-exec',
+        avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80`,
+        role: email.toLowerCase() === 'talk2icedmist@gmail.com' ? 'super_admin' : 'member',
+        directorateIds: ['dir-dev'],
         title: 'Workspace Member',
       };
       WorkspaceStorageService.saveUser(newUser);

@@ -1,242 +1,151 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { AuthProvider, useAuth } from '../context/AuthContext';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from '../components/layout/Sidebar';
 import { Header } from '../components/layout/Header';
-import { DashboardView } from '../components/dashboard/DashboardView';
 import { TaskKanbanBoard } from '../components/tasks/TaskKanbanBoard';
 import { TaskListView } from '../components/tasks/TaskListView';
-import { DirectorateGrid } from '../components/directorates/DirectorateGrid';
 import { CalendarView } from '../components/calendar/CalendarView';
+import { DirectorateGrid } from '../components/directorates/DirectorateGrid';
 import { MeetingNotesView } from '../components/meetings/MeetingNotesView';
 import { AnnouncementsView } from '../components/announcements/AnnouncementsView';
 import { ReportsView } from '../components/reports/ReportsView';
+import { SuperAdminView } from '../components/admin/SuperAdminView';
 import { AICommandModal } from '../components/ai/AICommandModal';
 import { CreateTaskModal } from '../components/tasks/CreateTaskModal';
 import { TaskDetailSheet } from '../components/tasks/TaskDetailSheet';
 import { AuthModal } from '../components/auth/AuthModal';
+import { OnboardingGuide } from '../components/onboarding/OnboardingGuide';
+
+import { Task, Directorate, User, Workspace, MeetingNote } from '../types';
 import { WorkspaceStorageService } from '../lib/storage';
-import { FirestoreService } from '../lib/firestoreService';
-import {
-  Task,
-  TaskStatus,
-  Directorate,
-  User,
-  Workspace,
-  MeetingNote,
-} from '../types';
-import { Kanban, List } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
-type ViewId =
-  | 'dashboard'
-  | 'tasks'
-  | 'directorates'
-  | 'calendar'
-  | 'meetings'
-  | 'announcements'
-  | 'analytics';
+export type ViewId = 'kanban' | 'tasks' | 'list' | 'calendar' | 'directorates' | 'meetings' | 'announcements' | 'analytics' | 'admin';
 
-function AlphaSparkContent() {
-  const { userProfile } = useAuth();
-  const [isReady, setIsReady] = useState(false);
-  const [currentView, setCurrentView] = useState<ViewId>('dashboard');
-  const [taskViewMode, setTaskViewMode] = useState<'kanban' | 'list'>('kanban');
+export default function Home() {
+  const { user: authUser } = useAuth();
 
-  const [workspace, setWorkspace] = useState<Workspace | null>(null);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [workspace, setWorkspace] = useState<Workspace>({
+    id: 'ws-alpha-spark',
+    name: 'Alpha Spark Global',
+    slug: 'alpha-spark',
+    ownerId: 'usr-snow',
+    logoUrl: '/logo.png',
+    planTier: 'enterprise',
+    createdAt: new Date().toISOString(),
+  });
+
+  const [currentView, setCurrentView] = useState<ViewId>('kanban');
+  const [selectedDirectorateId, setSelectedDirectorateId] = useState<string | undefined>(undefined);
+  
   const [tasks, setTasks] = useState<Task[]>([]);
   const [directorates, setDirectorates] = useState<Directorate[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [meetingNotes, setMeetingNotes] = useState<MeetingNote[]>([]);
-  const [selectedDirectorateId, setSelectedDirectorateId] = useState<string | undefined>();
 
-  // Modals state
+  // Modal / Sheet States
   const [showAICommand, setShowAICommand] = useState(false);
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
 
+  // Initialize data from LocalStorage/Defaults
   useEffect(() => {
-    WorkspaceStorageService.initSeedData();
-
-    const wsId = WorkspaceStorageService.getCurrentWorkspaceId();
-    const allWs = WorkspaceStorageService.getWorkspaces();
-    const ws = allWs.find((w) => w.id === wsId) ?? allWs[0];
-    setWorkspace(ws);
-
-    // Initial state loading
-    const allUsers = WorkspaceStorageService.getUsers();
-    setUsers(allUsers);
-
-    setDirectorates(WorkspaceStorageService.getDirectorates());
     setTasks(WorkspaceStorageService.getTasks());
+    setDirectorates(WorkspaceStorageService.getDirectorates());
+    setUsers(WorkspaceStorageService.getUsers());
     setMeetingNotes(WorkspaceStorageService.getMeetings());
 
-    // Subscribe to Firestore Realtime Updates
-    const unsubTasks = FirestoreService.subscribeTasks((realtimeTasks) => {
-      if (realtimeTasks && realtimeTasks.length > 0) {
-        setTasks(realtimeTasks);
-      }
-    });
-
-    const unsubUsers = FirestoreService.subscribeUsers((realtimeUsers) => {
-      if (realtimeUsers && realtimeUsers.length > 0) {
-        setUsers(realtimeUsers);
-      }
-    });
-
-    const unsubDirs = FirestoreService.subscribeDirectorates((realtimeDirs) => {
-      if (realtimeDirs && realtimeDirs.length > 0) {
-        setDirectorates(realtimeDirs);
-      }
-    });
-
-    const unsubMeetings = FirestoreService.subscribeMeetings((realtimeMeetings) => {
-      if (realtimeMeetings && realtimeMeetings.length > 0) {
-        setMeetingNotes(realtimeMeetings);
-      }
-    });
-
-    setIsReady(true);
-
-    return () => {
-      unsubTasks();
-      unsubUsers();
-      unsubDirs();
-      unsubMeetings();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (userProfile) {
-      setCurrentUser(userProfile);
-    } else {
-      const allUsers = WorkspaceStorageService.getUsers();
-      const defaultUser = allUsers.find((u) => u.role === 'super_admin') ?? allUsers[0];
-      setCurrentUser(defaultUser);
+    // Auto-open onboarding for first-time visitors
+    const completed = localStorage.getItem('alpha_spark_onboarding_completed_v1');
+    if (!completed) {
+      setShowGuide(true);
     }
-  }, [userProfile]);
-
-  // Cmd+K shortcut
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setShowAICommand(true);
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  const refreshTasks = useCallback(() => {
+  const currentUser: User = {
+    id: authUser?.uid || 'usr-snow',
+    workspaceId: 'ws-alpha-spark',
+    displayName: authUser?.displayName || authUser?.email?.split('@')[0] || 'Snow',
+    email: authUser?.email || 'talk2icedmist@gmail.com',
+    role: authUser?.email === 'talk2icedmist@gmail.com' || (!authUser && true) ? 'super_admin' : 'member',
+    directorateIds: ['dir-dev', 'dir-exec'],
+    avatarUrl: authUser?.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+    title: 'Executive Platform Director',
+  };
+
+  const handleTaskCreated = (newTask: Task) => {
     setTasks(WorkspaceStorageService.getTasks());
-  }, []);
-
-  const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
-    const updated = WorkspaceStorageService.updateTaskStatus(taskId, newStatus);
-    if (updated) {
-      setTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
-    }
   };
 
-  const handleTaskCreated = (task: Task) => {
-    setTasks((prev) => [task, ...prev.filter((t) => t.id !== task.id)]);
-    setShowCreateTask(false);
-  };
-
-  const handleTaskUpdated = (task: Task) => {
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
+  const handleTaskUpdated = (updatedTask: Task) => {
+    setTasks(WorkspaceStorageService.getTasks());
   };
 
   const handleTaskDeleted = (taskId: string) => {
-    setTasks((prev) => prev.filter((t) => t.id !== taskId));
-    setDetailTaskId(null);
+    setTasks(WorkspaceStorageService.getTasks());
   };
 
-  const openDetail = (task: Task) => setDetailTaskId(task.id);
+  const openDetail = (task: Task) => {
+    setDetailTaskId(task.id);
+  };
 
-  if (!isReady || !workspace || !currentUser) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-[#1A1A2E]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#E85D04] via-[#F4A261] to-[#0099CC] flex items-center justify-center animate-pulse shadow-lg glow-orange">
-            <span className="text-white font-extrabold text-base italic font-display">AS</span>
-          </div>
-          <p className="text-xs text-slate-300 font-bold tracking-widest uppercase italic">
-            Loading AminApps Alpha Spark Workspace...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const closeGuide = () => {
+    setShowGuide(false);
+    localStorage.setItem('alpha_spark_onboarding_completed_v1', 'true');
+  };
 
-  const detailTask = detailTaskId
-    ? tasks.find((t) => t.id === detailTaskId) ?? null
-    : null;
+  const detailTask = tasks.find((t) => t.id === detailTaskId) || null;
+
+  // Filter tasks if directorate selected
+  const filteredTasks = selectedDirectorateId
+    ? tasks.filter((t) => t.directorateId === selectedDirectorateId)
+    : tasks;
 
   const renderView = () => {
     switch (currentView) {
-      case 'dashboard':
+      case 'kanban':
+      case 'tasks':
         return (
-          <DashboardView
-            tasks={tasks}
+          <TaskKanbanBoard
+            tasks={filteredTasks}
             directorates={directorates}
             users={users}
-            currentUser={currentUser}
-            currentWorkspace={workspace}
-            onOpenAICommand={() => setShowAICommand(true)}
-            onOpenCreateTask={() => setShowCreateTask(true)}
-            onNavigate={(v) => setCurrentView(v as ViewId)}
+            selectedDirectorateId={selectedDirectorateId}
+            onTaskClick={openDetail}
+            onStatusChange={(taskId, newStatus) => {
+              WorkspaceStorageService.updateTaskStatus(taskId, newStatus);
+              setTasks(WorkspaceStorageService.getTasks());
+            }}
+            onCreateTaskClick={() => setShowCreateTask(true)}
           />
         );
 
-      case 'tasks':
+      case 'list':
         return (
-          <div className="flex flex-col flex-1 min-h-0">
-            {/* View mode toggle */}
-            <div className="flex items-center gap-2 px-6 pt-5 pb-3">
-              {([
-                { id: 'kanban', label: 'Kanban Board', Icon: Kanban },
-                { id: 'list', label: 'List Matrix', Icon: List },
-              ] as const).map(({ id, label, Icon }) => (
-                <button
-                  key={id}
-                  onClick={() => setTaskViewMode(id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider border transition ${
-                    taskViewMode === id
-                      ? 'bg-[#E85D04]/20 text-white border-[#E85D04]/50 shadow-md'
-                      : 'text-slate-400 border-white/10 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 ${taskViewMode === id ? 'text-[#E85D04]' : 'text-slate-400'}`} />
-                  {label}
-                </button>
-              ))}
-            </div>
+          <TaskListView
+            tasks={filteredTasks}
+            directorates={directorates}
+            users={users}
+            onTaskClick={openDetail}
+            onStatusChange={(taskId, newStatus) => {
+              WorkspaceStorageService.updateTaskStatus(taskId, newStatus);
+              setTasks(WorkspaceStorageService.getTasks());
+            }}
+            onCreateTaskClick={() => setShowCreateTask(true)}
+          />
+        );
 
-            {taskViewMode === 'kanban' ? (
-              <TaskKanbanBoard
-                tasks={tasks}
-                directorates={directorates}
-                users={users}
-                selectedDirectorateId={selectedDirectorateId}
-                onTaskClick={openDetail}
-                onStatusChange={handleStatusChange}
-                onCreateTaskClick={() => setShowCreateTask(true)}
-              />
-            ) : (
-              <TaskListView
-                tasks={tasks}
-                directorates={directorates}
-                users={users}
-                onTaskClick={openDetail}
-                onStatusChange={handleStatusChange}
-                onCreateTaskClick={() => setShowCreateTask(true)}
-              />
-            )}
-          </div>
+      case 'calendar':
+        return (
+          <CalendarView
+            tasks={filteredTasks}
+            directorates={directorates}
+            onTaskClick={openDetail}
+            onCreateTaskClick={() => setShowCreateTask(true)}
+          />
         );
 
       case 'directorates':
@@ -245,20 +154,10 @@ function AlphaSparkContent() {
             directorates={directorates}
             tasks={tasks}
             users={users}
-            onSelectDirectorate={(id) => {
-              setSelectedDirectorateId(id);
-              setCurrentView('tasks');
+            onSelectDirectorate={(dirId) => {
+              setSelectedDirectorateId(dirId);
+              setCurrentView('kanban');
             }}
-          />
-        );
-
-      case 'calendar':
-        return (
-          <CalendarView
-            tasks={tasks}
-            directorates={directorates}
-            onTaskClick={openDetail}
-            onCreateTaskClick={() => setShowCreateTask(true)}
           />
         );
 
@@ -268,10 +167,8 @@ function AlphaSparkContent() {
             meetingNotes={meetingNotes}
             directorates={directorates}
             users={users}
-            onTaskCreated={(task) => {
-              handleTaskCreated(task);
-              setMeetingNotes(WorkspaceStorageService.getMeetings());
-            }}
+            currentUser={currentUser}
+            onMeetingCreated={() => setMeetingNotes(WorkspaceStorageService.getMeetings())}
           />
         );
 
@@ -294,75 +191,85 @@ function AlphaSparkContent() {
           />
         );
 
+      case 'admin':
+        return (
+          <SuperAdminView
+            users={users}
+            directorates={directorates}
+            tasks={tasks}
+            currentUser={currentUser}
+            onUsersUpdated={() => setUsers(WorkspaceStorageService.getUsers())}
+          />
+        );
+
       default:
         return null;
     }
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#1A1A2E] text-[#F5F5F5]">
-      {/* Sidebar */}
+    <div className="flex h-screen overflow-hidden bg-[#1A1A2E] text-[#F5F5F5] font-sans selection:bg-[#E85D04] selection:text-white">
       <Sidebar
         directorates={directorates}
         tasks={tasks}
         selectedDirectorateId={selectedDirectorateId}
-        onSelectDirectorate={setSelectedDirectorateId}
+        onSelectDirectorate={(id) => {
+          setSelectedDirectorateId(id);
+          if (currentView !== 'tasks' && currentView !== 'kanban') setCurrentView('kanban');
+        }}
         currentView={currentView}
         onNavigate={(v) => setCurrentView(v as ViewId)}
+        currentUser={currentUser}
       />
 
-      {/* Main content */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         <Header
           onOpenAICommand={() => setShowAICommand(true)}
           onOpenCreateTask={() => setShowCreateTask(true)}
           onOpenWorkspaceModal={() => {}}
           onOpenAuthModal={() => setShowAuthModal(true)}
+          onOpenGuide={() => setShowGuide(true)}
           currentUser={currentUser}
           currentWorkspace={workspace}
         />
 
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 flex flex-col min-h-0 bg-grid">
           {renderView()}
         </main>
       </div>
 
-      {/* Modals */}
-      {showAuthModal && (
-        <AuthModal
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-        />
-      )}
+      {/* Modals & Tour */}
+      <OnboardingGuide
+        isOpen={showGuide}
+        onClose={closeGuide}
+        onNavigateToAdmin={() => setCurrentView('admin')}
+        onOpenAICommand={() => setShowAICommand(true)}
+      />
 
-      {showAICommand && (
-        <AICommandModal
-          isOpen={showAICommand}
-          onClose={() => setShowAICommand(false)}
-          onTaskCreatedOrUpdated={(task) => {
-            handleTaskUpdated(task);
-            refreshTasks();
-          }}
-          onFilterOverdue={() => {
-            setCurrentView('tasks');
-            setShowAICommand(false);
-          }}
-          onGenerateReport={() => {
-            setCurrentView('analytics');
-            setShowAICommand(false);
-          }}
-        />
-      )}
+      <AICommandModal
+        isOpen={showAICommand}
+        onClose={() => setShowAICommand(false)}
+        onTaskCreatedOrUpdated={handleTaskCreated}
+        onFilterOverdue={() => {
+          setCurrentView('kanban');
+        }}
+        onGenerateReport={() => {
+          setCurrentView('analytics');
+        }}
+      />
 
-      {showCreateTask && (
-        <CreateTaskModal
-          isOpen={showCreateTask}
-          onClose={() => setShowCreateTask(false)}
-          directorates={directorates}
-          users={users}
-          onTaskCreated={handleTaskCreated}
-        />
-      )}
+      <CreateTaskModal
+        isOpen={showCreateTask}
+        onClose={() => setShowCreateTask(false)}
+        onTaskCreated={handleTaskCreated}
+        directorates={directorates}
+        users={users}
+      />
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
 
       {detailTask && (
         <TaskDetailSheet
@@ -375,13 +282,5 @@ function AlphaSparkContent() {
         />
       )}
     </div>
-  );
-}
-
-export default function AlphaSparkApp() {
-  return (
-    <AuthProvider>
-      <AlphaSparkContent />
-    </AuthProvider>
   );
 }

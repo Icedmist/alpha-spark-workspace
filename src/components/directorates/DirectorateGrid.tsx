@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Directorate, Task, User as UserType } from '../../types';
-import { Users, CheckCircle2, Clock, AlertCircle, ArrowUpRight, FolderKanban } from 'lucide-react';
+import { Users, CheckCircle2, ArrowUpRight, FolderKanban } from 'lucide-react';
 
 interface DirectorateGridProps {
   directorates: Directorate[];
@@ -18,25 +18,25 @@ export const DirectorateGrid: React.FC<DirectorateGridProps> = ({
   onSelectDirectorate,
 }) => {
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6 animate-in w-full">
       {/* Header Info Banner */}
-      <div className="bg-gradient-to-r from-indigo-950/60 via-slate-900 to-purple-950/60 border border-indigo-800/40 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-[#1A1A2E] via-[#E85D04]/20 to-[#0099CC]/20 border border-[#E85D04]/30 rounded-3xl p-6 shadow-2xl backdrop-blur-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <FolderKanban className="w-6 h-6 text-indigo-400" /> Organizational Directorate Infrastructure
+          <h2 className="font-display text-2xl font-black text-white italic uppercase tracking-tight flex items-center gap-2">
+            <FolderKanban className="w-6 h-6 text-[#E85D04]" /> Organizational Directorate Infrastructure
           </h2>
           <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
             Alpha Spark Workspace categorizes all company workflows into 9 specialized directorates. Click any directorate card below to filter tasks, review head leadership, and inspect task execution throughput.
           </p>
         </div>
-        <div className="flex items-center gap-4 text-xs font-semibold text-slate-300">
-          <div className="bg-slate-900/90 border border-slate-800 px-3 py-2 rounded-xl text-center">
-            <span className="block text-indigo-400 text-base font-bold">{directorates.length}</span>
-            <span className="text-[10px] text-slate-400 uppercase">Directorates</span>
+        <div className="flex items-center gap-4 text-xs font-bold text-slate-300">
+          <div className="bg-black/40 border border-white/10 px-4 py-2.5 rounded-2xl text-center">
+            <span className="block text-[#0099CC] text-lg font-display font-black">{directorates.length}</span>
+            <span className="text-[9px] text-slate-400 uppercase tracking-widest">Directorates</span>
           </div>
-          <div className="bg-slate-900/90 border border-slate-800 px-3 py-2 rounded-xl text-center">
-            <span className="block text-emerald-400 text-base font-bold">{tasks.length}</span>
-            <span className="text-[10px] text-slate-400 uppercase">Active Tasks</span>
+          <div className="bg-black/40 border border-white/10 px-4 py-2.5 rounded-2xl text-center">
+            <span className="block text-[#E85D04] text-lg font-display font-black">{tasks.length}</span>
+            <span className="text-[9px] text-slate-400 uppercase tracking-widest">Active Tasks</span>
           </div>
         </div>
       </div>
@@ -47,31 +47,30 @@ export const DirectorateGrid: React.FC<DirectorateGridProps> = ({
           const dirTasks = tasks.filter((t) => t.directorateId === dir.id);
           const completedTasks = dirTasks.filter((t) => t.status === 'completed');
           const completionRate = dirTasks.length > 0 ? Math.round((completedTasks.length / dirTasks.length) * 100) : 100;
-          const leadUser = users.find((u) => u.id === dir.leadUserId);
-          const dirMembers = users.filter((u) => u.directorateId === dir.id);
+          const leadUser = users.find((u) => u.id === dir.leadId);
 
           return (
             <div
               key={dir.id}
               onClick={() => onSelectDirectorate(dir.id)}
-              className="group bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-2xl p-5 shadow-md hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between space-y-4"
+              className="group bg-[#1A1A2E]/80 hover:bg-[#1A1A2E] border border-white/10 hover:border-[#E85D04]/50 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all cursor-pointer flex flex-col justify-between space-y-4 backdrop-blur-xl"
             >
               {/* Top Row: Color Badge & Code */}
               <div>
                 <div className="flex items-center justify-between">
                   <span
-                    className="px-3 py-1 text-xs font-bold rounded-lg text-white shadow"
+                    className="px-3 py-1 text-xs font-black uppercase tracking-wider rounded-xl text-white shadow-md"
                     style={{ backgroundColor: dir.color }}
                   >
                     {dir.code}
                   </span>
-                  <span className="text-slate-500 group-hover:text-indigo-400 transition">
+                  <span className="text-slate-500 group-hover:text-[#F4A261] transition">
                     <ArrowUpRight className="w-5 h-5" />
                   </span>
                 </div>
 
                 {/* Directorate Name & Description */}
-                <h3 className="text-lg font-bold text-slate-100 mt-3 group-hover:text-indigo-300 transition">
+                <h3 className="font-display text-lg font-black text-white italic uppercase tracking-tight mt-3 group-hover:text-[#F4A261] transition">
                   {dir.name}
                 </h3>
                 <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
@@ -80,38 +79,38 @@ export const DirectorateGrid: React.FC<DirectorateGridProps> = ({
               </div>
 
               {/* Progress Bar */}
-              <div className="space-y-1.5 pt-2 border-t border-slate-800/60">
+              <div className="space-y-1.5 pt-2 border-t border-white/5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400 font-medium">Task Completion Rate</span>
-                  <span className="font-bold text-slate-200">{completionRate}%</span>
+                  <span className="text-slate-400 font-bold">Task Completion</span>
+                  <span className="font-black text-[#0099CC]">{completionRate}%</span>
                 </div>
-                <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+                <div className="w-full bg-black/60 rounded-full h-2 overflow-hidden border border-white/5">
                   <div
-                    className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-[#0099CC] to-[#E85D04] rounded-full transition-all duration-500"
                     style={{ width: `${completionRate}%` }}
                   ></div>
                 </div>
               </div>
 
               {/* Bottom Metadata: Lead & Task Counts */}
-              <div className="flex items-center justify-between pt-3 border-t border-slate-800/80 text-xs">
+              <div className="flex items-center justify-between pt-3 border-t border-white/10 text-xs">
                 {/* Directorate Lead */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <img
-                    src={leadUser?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
+                    src={leadUser?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
                     alt={leadUser?.displayName}
-                    className="w-7 h-7 rounded-full border border-slate-700 object-cover"
+                    className="w-8 h-8 rounded-full border border-white/10 object-cover ring-2 ring-[#E85D04]"
                   />
                   <div>
-                    <span className="text-[10px] text-slate-500 block uppercase">Directorate Lead</span>
-                    <span className="font-semibold text-slate-200">{leadUser?.displayName.split(' ')[0] || 'Team Lead'}</span>
+                    <span className="text-[9px] text-slate-400 block font-bold uppercase tracking-widest">Directorate Lead</span>
+                    <span className="font-bold text-white text-xs">{leadUser?.displayName.split(' ')[0] || 'Team Lead'}</span>
                   </div>
                 </div>
 
                 {/* Task counter badge */}
                 <div className="text-right">
-                  <span className="text-[10px] text-slate-500 block uppercase">Workload</span>
-                  <span className="font-bold text-indigo-400">{dirTasks.length} Tasks</span>
+                  <span className="text-[9px] text-slate-400 block font-bold uppercase tracking-widest">Workload</span>
+                  <span className="font-bold text-[#E85D04] text-xs">{dirTasks.length} Tasks</span>
                 </div>
               </div>
             </div>

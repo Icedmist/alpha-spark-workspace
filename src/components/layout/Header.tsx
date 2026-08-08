@@ -7,10 +7,10 @@ import {
   Plus,
   Bell,
   ChevronDown,
-  User as UserIcon,
   ShieldCheck,
   LogIn,
   LogOut,
+  HelpCircle,
 } from 'lucide-react';
 import { Workspace, User as UserType } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -20,6 +20,7 @@ interface HeaderProps {
   onOpenCreateTask: () => void;
   onOpenWorkspaceModal: () => void;
   onOpenAuthModal: () => void;
+  onOpenGuide: () => void;
   currentUser: UserType;
   currentWorkspace: Workspace;
 }
@@ -29,6 +30,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCreateTask,
   onOpenWorkspaceModal,
   onOpenAuthModal,
+  onOpenGuide,
   currentUser,
   currentWorkspace,
 }) => {
@@ -43,6 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   const activeUser = userProfile || currentUser;
+  const isSuperAdmin = activeUser.role === 'super_admin';
 
   return (
     <header className="h-16 border-b border-white/10 bg-[#1A1A2E]/80 backdrop-blur-xl px-6 flex items-center justify-between sticky top-0 z-30">
@@ -52,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={onOpenWorkspaceModal}
           className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition text-left group"
         >
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#E85D04] to-[#F4A261] flex items-center justify-center text-white font-black text-xs shadow-md glow-orange">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-[#E85D04] via-[#F4A261] to-[#0099CC] flex items-center justify-center text-white font-black text-xs shadow-md glow-orange">
             AS
           </div>
           <div>
@@ -79,8 +82,17 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Right section: AI Command, Create Task, Notifications, Profile */}
+      {/* Right section: Onboarding Guide, AI Command, Create Task, Notifications, Profile */}
       <div className="flex items-center gap-3">
+        {/* Onboarding Guide trigger */}
+        <button
+          onClick={onOpenGuide}
+          className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition border border-white/5"
+          title="Onboarding Guide & Setup"
+        >
+          <HelpCircle className="w-4 h-4 text-[#0099CC]" />
+        </button>
+
         {/* AI Command Bar Trigger */}
         <button
           onClick={onOpenAICommand}
@@ -145,7 +157,14 @@ export const Header: React.FC<HeaderProps> = ({
                 className="w-8 h-8 rounded-full object-cover ring-2 ring-[#E85D04]"
               />
               <div className="hidden xl:block text-left">
-                <div className="text-xs font-bold text-white leading-none">{activeUser.displayName}</div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-white leading-none">{activeUser.displayName}</span>
+                  {isSuperAdmin && (
+                    <span className="px-1.5 py-0.5 text-[8px] font-black uppercase rounded bg-[#E85D04] text-white">
+                      Super Admin
+                    </span>
+                  )}
+                </div>
                 <div className="text-[10px] text-[#0099CC] mt-1 flex items-center gap-1 font-semibold">
                   <ShieldCheck className="w-3 h-3 text-emerald-400" />
                   <span>Authenticated</span>
@@ -167,6 +186,11 @@ export const Header: React.FC<HeaderProps> = ({
               <div className="p-2 border-b border-white/10 mb-2">
                 <p className="text-xs font-bold text-white">{activeUser.displayName}</p>
                 <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
+                {isSuperAdmin && (
+                  <span className="inline-block mt-1 px-2 py-0.5 text-[9px] font-black uppercase rounded bg-[#E85D04]/20 text-[#E85D04] border border-[#E85D04]/30">
+                    Platform Super Admin
+                  </span>
+                )}
               </div>
               <button
                 onClick={() => {

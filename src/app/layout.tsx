@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { AuthProvider } from '../context/AuthContext';
 
 export const metadata: Metadata = {
   title: 'Alpha Spark Workspace | AminApps',
@@ -22,7 +23,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-[#1A1A2E] text-[#F5F5F5] selection:bg-[#E85D04] selection:text-white font-sans bg-grid">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

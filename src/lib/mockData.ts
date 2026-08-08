@@ -308,7 +308,7 @@ export const INITIAL_TASKS: Task[] = [
     workspaceId: 'ws-alpha-spark',
     title: 'Finalize NGO Partnership MOU for Kano Youth Innovation Hub',
     description: 'Review legal terms, define joint bootcamp obligations, and schedule signing ceremony.',
-    category: 'partnership',
+    category: 'marketing',
     directorateId: 'dir-prt',
     assigneeIds: ['usr-tariq', 'usr-snow'],
     createdBy: 'usr-snow',

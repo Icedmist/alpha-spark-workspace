@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,14 +11,11 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-      // Return structured response indicating fallback usage
       return NextResponse.json({
         result: null,
-        message: 'No GEMINI_API_KEY configured, client fallback parser enabled.',
+        message: 'No GEMINI_API_KEY configured, client fallback parser active.',
       });
     }
-
-    const ai = new GoogleGenAI({ apiKey });
 
     const systemPrompt = `You are Alpha Spark AI Project Manager, an intelligent organizational assistant.
 You interpret natural language instructions from team leaders and convert them into structured workspace actions.
@@ -30,29 +26,43 @@ Current Tasks Count: ${existingTasks?.length || 0}
 
 Analyze the user command: "${command}"
 
-Respond ONLY with a valid JSON object with the following schema:
+Respond ONLY with a valid JSON object matching this exact schema:
 {
-  "intent": "create_task" | "update_status" | "assign_task" | "filter_overdue" | "generate_report" | "unknown",
+  "intent": "create_task",
   "naturalLanguageCommand": "${command}",
   "extractedTask": {
     "title": "Clean, concise title",
     "description": "Detailed task context",
-    "category": "teaching" | "student_support" | "software_dev" | "graphic_design" | "marketing" | "finance" | "hr" | "operations" | "event" | "procurement" | "executive" | "custom",
+    "category": "software_dev",
     "directorateId": "matching_directorate_id",
     "assigneeIds": ["usr-id"],
-    "priority": "low" | "medium" | "high" | "urgent",
+    "priority": "urgent",
     "status": "todo",
     "dueDate": "ISO_DATE_STRING"
   },
   "explanation": "Clear 1-sentence summary of action taken"
 }`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: systemPrompt,
-    });
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: systemPrompt }] }],
+        }),
+      }
+    );
 
-    const text = response.text || '';
+    if (!res.ok) {
+      const errText = await res.text();
+      return NextResponse.json({ error: errText }, { status: res.status });
+    }
+
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
     const result = JSON.parse(cleanJson);
 

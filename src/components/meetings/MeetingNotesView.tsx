@@ -11,7 +11,9 @@ interface MeetingNotesViewProps {
   meetingNotes: MeetingNote[];
   directorates: Directorate[];
   users: UserType[];
-  onTaskCreated: (task: Task) => void;
+  currentUser?: UserType;
+  onMeetingCreated?: () => void;
+  onTaskCreated?: (task: Task) => void;
 }
 
 export const MeetingNotesView: React.FC<MeetingNotesViewProps> = ({
@@ -20,20 +22,23 @@ export const MeetingNotesView: React.FC<MeetingNotesViewProps> = ({
   users,
   onTaskCreated,
 }) => {
-  const [selectedNote, setSelectedNote] = useState<MeetingNote>(meetingNotes[0] || {
+  const defaultNote: MeetingNote = meetingNotes[0] || {
     id: 'mn-1',
-    workspaceId: 'ws-alpha-1',
+    workspaceId: 'ws-alpha-spark',
     title: 'Executive & Academic Strategy Alignment',
     date: new Date().toISOString(),
-    attendees: ['usr-snow', 'usr-fatima', 'usr-amina'],
-    summary: 'Discussed August student cohort intake, software infrastructure overhaul, and marketing budget.',
+    directorateId: 'dir-dev',
+    attendeeIds: ['usr-snow', 'usr-fatima', 'usr-amina'],
+    content: 'Discussed August student cohort intake, software infrastructure overhaul, and marketing budget.',
     actionItems: [
-      'Assign Fatima to teach Machine Learning cohort tomorrow at 4 PM',
-      'Ask Amina to design webinar flyer by Friday',
-      'Audit Q2 operational expenditure for finance team',
+      { title: 'Assign Fatima to teach Machine Learning cohort tomorrow at 4 PM' },
+      { title: 'Ask Amina to design webinar flyer by Friday' },
+      { title: 'Audit Q2 operational expenditure for finance team' },
     ],
-  });
+    createdAt: new Date().toISOString(),
+  };
 
+  const [selectedNote, setSelectedNote] = useState<MeetingNote>(defaultNote);
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
 
@@ -44,7 +49,8 @@ export const MeetingNotesView: React.FC<MeetingNotesViewProps> = ({
     const tasks: Task[] = [];
     const tasksList = WorkspaceStorageService.getTasks();
 
-    for (const itemText of selectedNote.actionItems) {
+    for (const item of selectedNote.actionItems) {
+      const itemText = typeof item === 'string' ? item : item.title;
       const parsed = await AICommandParser.parseCommandWithAI(itemText, users, directorates, tasksList);
       if (parsed.intent === 'create_task' && parsed.extractedTask) {
         const taskData = parsed.extractedTask;
@@ -65,7 +71,7 @@ export const MeetingNotesView: React.FC<MeetingNotesViewProps> = ({
           tags: ['Meeting Extracted', 'AI Created'],
         });
         tasks.push(created);
-        onTaskCreated(created);
+        if (onTaskCreated) onTaskCreated(created);
       }
     }
 
@@ -75,15 +81,15 @@ export const MeetingNotesView: React.FC<MeetingNotesViewProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6 animate-in w-full">
       {/* Banner */}
-      <div className="bg-gradient-to-r from-purple-950/60 via-slate-900 to-indigo-950/60 border border-purple-800/40 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-purple-950/60 via-[#1A1A2E] to-[#E85D04]/20 border border-[#E85D04]/30 rounded-3xl p-6 shadow-2xl backdrop-blur-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <FileText className="w-6 h-6 text-purple-400" /> Executive Meeting Notes & Action Extractor
+          <h2 className="font-display text-2xl font-black text-white italic uppercase tracking-tight flex items-center gap-2">
+            <FileText className="w-6 h-6 text-[#E85D04]" /> Executive Meeting Notes & Action Extractor
           </h2>
           <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
-            Record key discussions and click <strong>"Extract AI Tasks"</strong> to automatically convert unstructured meeting action items into actionable tasks with assigned directorates, due dates, and priority tags.
+            Record key discussions and click <strong>"Extract AI Tasks"</strong> to automatically convert unstructured meeting action items into actionable tasks with assigned directorates and due dates.
           </p>
         </div>
       </div>
@@ -91,8 +97,8 @@ export const MeetingNotesView: React.FC<MeetingNotesViewProps> = ({
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Notes List Sidebar */}
-        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 px-2">
+        <div className="bg-[#1A1A2E]/80 border border-white/10 rounded-3xl p-5 space-y-3 backdrop-blur-xl">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 px-2">
             Recent Meetings ({meetingNotes.length})
           </h3>
           <div className="space-y-2">
@@ -103,15 +109,15 @@ export const MeetingNotesView: React.FC<MeetingNotesViewProps> = ({
                   setSelectedNote(note);
                   setExtractedTasks([]);
                 }}
-                className={`p-3.5 rounded-xl border transition cursor-pointer ${
+                className={`p-4 rounded-2xl border transition cursor-pointer ${
                   selectedNote.id === note.id
-                    ? 'bg-indigo-950/60 border-indigo-500 text-slate-100'
-                    : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
+                    ? 'bg-[#E85D04]/20 border-[#E85D04] text-white shadow-lg'
+                    : 'bg-black/40 border-white/5 text-slate-300 hover:border-white/20'
                 }`}
               >
-                <h4 className="font-semibold text-sm line-clamp-1">{note.title}</h4>
+                <h4 className="font-bold text-xs line-clamp-1">{note.title}</h4>
                 <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-1">
-                  <Calendar className="w-3 h-3 text-indigo-400" />
+                  <Calendar className="w-3 h-3 text-[#0099CC]" />
                   <span>{new Date(note.date).toLocaleDateString()}</span>
                   <span>•</span>
                   <span>{note.actionItems.length} action items</span>
@@ -123,19 +129,19 @@ export const MeetingNotesView: React.FC<MeetingNotesViewProps> = ({
 
         {/* Note Detail & AI Extractor */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-6 shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div className="bg-[#1A1A2E]/80 border border-white/10 rounded-3xl p-6 space-y-6 shadow-2xl backdrop-blur-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
               <div>
-                <h3 className="text-lg font-bold text-slate-100">{selectedNote.title}</h3>
-                <span className="text-xs text-slate-400 flex items-center gap-1.5 mt-1">
-                  <Calendar className="w-3.5 h-3.5 text-indigo-400" /> Date: {new Date(selectedNote.date).toLocaleDateString()}
+                <h3 className="font-display text-xl font-black text-white italic uppercase tracking-tight">{selectedNote.title}</h3>
+                <span className="text-xs text-slate-400 flex items-center gap-1.5 mt-1 font-medium">
+                  <Calendar className="w-3.5 h-3.5 text-[#0099CC]" /> Date: {new Date(selectedNote.date).toLocaleDateString()}
                 </span>
               </div>
 
               <button
                 onClick={handleExtractActionItems}
                 disabled={isExtracting}
-                className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition shadow-lg shadow-indigo-600/25 disabled:opacity-50"
+                className="px-5 py-2.5 bg-gradient-to-r from-[#E85D04] to-[#F4A261] hover:opacity-95 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition shadow-lg glow-orange disabled:opacity-50 uppercase tracking-wider"
               >
                 {isExtracting ? (
                   <span className="flex items-center gap-2">
@@ -144,7 +150,7 @@ export const MeetingNotesView: React.FC<MeetingNotesViewProps> = ({
                   </span>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4 text-amber-300" /> Extract AI Tasks from Notes
+                    <Sparkles className="w-4 h-4 text-amber-200" /> Extract AI Tasks
                   </>
                 )}
               </button>
@@ -152,14 +158,14 @@ export const MeetingNotesView: React.FC<MeetingNotesViewProps> = ({
 
             {/* Attendees */}
             <div>
-              <h4 className="text-xs font-semibold uppercase text-slate-400 mb-2">Meeting Attendees</h4>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Meeting Attendees</h4>
               <div className="flex flex-wrap items-center gap-2">
-                {selectedNote.attendees.map((id) => {
-                  const user = users.find((u) => u.id === id);
+                {(selectedNote.attendeeIds || []).map((id) => {
+                  const usr = users.find((u) => u.id === id);
                   return (
-                    <span key={id} className="px-3 py-1 bg-slate-950 border border-slate-800 text-slate-200 rounded-full text-xs font-medium flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-indigo-400" />
-                      {user?.displayName || id}
+                    <span key={id} className="px-3 py-1 bg-black/40 border border-white/10 text-slate-200 rounded-full text-xs font-medium flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 text-[#0099CC]" />
+                      {usr?.displayName || id}
                     </span>
                   );
                 })}
@@ -168,36 +174,39 @@ export const MeetingNotesView: React.FC<MeetingNotesViewProps> = ({
 
             {/* Executive Summary */}
             <div className="space-y-2">
-              <h4 className="text-xs font-semibold uppercase text-slate-400">Executive Summary</h4>
-              <p className="text-sm text-slate-300 bg-slate-950/60 p-4 border border-slate-800/80 rounded-xl leading-relaxed">
-                {selectedNote.summary}
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Executive Notes & Content</h4>
+              <p className="text-xs text-slate-300 bg-black/40 p-4 border border-white/10 rounded-2xl leading-relaxed">
+                {selectedNote.content}
               </p>
             </div>
 
             {/* Action Items List */}
             <div className="space-y-3">
-              <h4 className="text-xs font-semibold uppercase text-slate-400">Action Items ({selectedNote.actionItems.length})</h4>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Action Items ({selectedNote.actionItems.length})</h4>
               <div className="space-y-2">
-                {selectedNote.actionItems.map((item, idx) => (
-                  <div key={idx} className="p-3 bg-slate-950/80 border border-slate-800/80 rounded-xl flex items-start gap-3 text-xs text-slate-200">
-                    <ArrowRight className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" />
-                    <span>{item}</span>
-                  </div>
-                ))}
+                {selectedNote.actionItems.map((item, idx) => {
+                  const text = typeof item === 'string' ? item : item.title;
+                  return (
+                    <div key={idx} className="p-3 bg-black/40 border border-white/5 rounded-2xl flex items-start gap-3 text-xs text-slate-200">
+                      <ArrowRight className="w-4 h-4 text-[#E85D04] mt-0.5 flex-shrink-0" />
+                      <span>{text}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
             {/* Extracted Tasks Output */}
             {extractedTasks.length > 0 && (
-              <div className="p-4 bg-emerald-950/40 border border-emerald-800/50 rounded-xl space-y-3 animate-in fade-in">
+              <div className="p-4 bg-emerald-950/40 border border-emerald-500/40 rounded-2xl space-y-3 animate-in">
                 <div className="flex items-center gap-2 text-emerald-300 font-bold text-xs uppercase tracking-wider">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" /> AI Successfully Extracted & Dispatched {extractedTasks.length} Tasks:
                 </div>
                 <div className="space-y-2">
                   {extractedTasks.map((t) => (
-                    <div key={t.id} className="p-3 bg-slate-950 border border-emerald-800/60 rounded-lg text-xs flex items-center justify-between">
-                      <span className="font-semibold text-slate-100">{t.title}</span>
-                      <span className="px-2 py-0.5 text-[10px] uppercase font-bold bg-indigo-950 text-indigo-300 rounded">
+                    <div key={t.id} className="p-3 bg-black/60 border border-emerald-500/30 rounded-xl text-xs flex items-center justify-between">
+                      <span className="font-bold text-white">{t.title}</span>
+                      <span className="px-2 py-0.5 text-[10px] uppercase font-black bg-[#E85D04]/20 text-[#E85D04] rounded border border-[#E85D04]/30">
                         {t.priority}
                       </span>
                     </div>

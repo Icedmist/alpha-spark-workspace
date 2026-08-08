@@ -11,8 +11,9 @@ import {
   BarChart3,
   Sparkles,
   ChevronRight,
+  ShieldCheck,
 } from 'lucide-react';
-import { Directorate, Task } from '../../types';
+import { Directorate, Task, User } from '../../types';
 
 interface SidebarProps {
   directorates: Directorate[];
@@ -21,6 +22,7 @@ interface SidebarProps {
   onSelectDirectorate?: (id: string | undefined) => void;
   currentView?: string;
   onNavigate?: (view: string) => void;
+  currentUser?: User;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -30,7 +32,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectDirectorate,
   currentView = 'dashboard',
   onNavigate,
+  currentUser,
 }) => {
+  const isSuperAdmin = currentUser?.role === 'super_admin';
+
   const navItems = [
     { name: 'Dashboard', view: 'dashboard', icon: LayoutDashboard },
     { name: 'Task Board', view: 'tasks', icon: Kanban },
@@ -39,6 +44,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { name: 'Meeting Notes', view: 'meetings', icon: FileText },
     { name: 'Announcements', view: 'announcements', icon: Megaphone },
     { name: 'Analytics & Reports', view: 'analytics', icon: BarChart3 },
+    ...(isSuperAdmin
+      ? [{ name: 'Platform Admin', view: 'admin', icon: ShieldCheck, isSpecial: true }]
+      : []),
   ];
 
   return (
@@ -74,15 +82,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onClick={() => onNavigate && onNavigate(item.view)}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold tracking-wide transition ${
                     isActive
-                      ? 'bg-[#E85D04]/20 text-white border border-[#E85D04]/50 shadow-md'
+                      ? item.isSpecial
+                        ? 'bg-purple-600/30 text-white border border-purple-500/50 shadow-md'
+                        : 'bg-[#E85D04]/20 text-white border border-[#E85D04]/50 shadow-md'
+                      : item.isSpecial
+                      ? 'text-purple-300 hover:text-white hover:bg-purple-500/10 border border-purple-500/20'
                       : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-[#E85D04]' : 'text-slate-400'}`} />
+                    <Icon
+                      className={`w-4 h-4 ${
+                        isActive
+                          ? item.isSpecial
+                            ? 'text-purple-300'
+                            : 'text-[#E85D04]'
+                          : item.isSpecial
+                          ? 'text-purple-400'
+                          : 'text-slate-400'
+                      }`}
+                    />
                     <span>{item.name}</span>
                   </div>
-                  {isActive && <ChevronRight className="w-3.5 h-3.5 text-[#E85D04]" />}
+                  {isActive && (
+                    <ChevronRight
+                      className={`w-3.5 h-3.5 ${
+                        item.isSpecial ? 'text-purple-300' : 'text-[#E85D04]'
+                      }`}
+                    />
+                  )}
                 </button>
               );
             })}
