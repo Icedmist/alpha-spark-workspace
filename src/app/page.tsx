@@ -15,16 +15,18 @@ import { AICommandModal } from '../components/ai/AICommandModal';
 import { CreateTaskModal } from '../components/tasks/CreateTaskModal';
 import { TaskDetailSheet } from '../components/tasks/TaskDetailSheet';
 import { AuthModal } from '../components/auth/AuthModal';
+import { LoginView } from '../components/auth/LoginView';
 import { OnboardingGuide } from '../components/onboarding/OnboardingGuide';
 
 import { Task, Directorate, User, Workspace, MeetingNote } from '../types';
 import { WorkspaceStorageService } from '../lib/storage';
 import { useAuth } from '../context/AuthContext';
+import { Sparkles } from 'lucide-react';
 
 export type ViewId = 'kanban' | 'tasks' | 'list' | 'calendar' | 'directorates' | 'meetings' | 'announcements' | 'analytics' | 'admin';
 
 export default function Home() {
-  const { user: authUser } = useAuth();
+  const { user: authUser, userProfile, loading } = useAuth();
 
   const [workspace, setWorkspace] = useState<Workspace>({
     id: 'ws-alpha-spark',
@@ -58,22 +60,41 @@ export default function Home() {
     setUsers(WorkspaceStorageService.getUsers());
     setMeetingNotes(WorkspaceStorageService.getMeetings());
 
-    // Auto-open onboarding for first-time visitors
+    // Auto-open onboarding for first-time visitors once authenticated
     const completed = localStorage.getItem('alpha_spark_onboarding_completed_v1');
-    if (!completed) {
+    if (!completed && (authUser || userProfile)) {
       setShowGuide(true);
     }
-  }, []);
+  }, [authUser, userProfile]);
 
-  const currentUser: User = {
+  // Loading State
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#1A1A2E] text-white flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#E85D04] to-[#F4A261] flex items-center justify-center shadow-lg glow-orange animate-bounce">
+            <Sparkles className="w-6 h-6 text-white" />
+          </div>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Loading Alpha Spark OS...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Require Auth Guard: Render Login Screen before showing data
+  if (!authUser && !userProfile) {
+    return <LoginView />;
+  }
+
+  const currentUser: User = userProfile || {
     id: authUser?.uid || 'usr-snow',
     workspaceId: 'ws-alpha-spark',
     displayName: authUser?.displayName || authUser?.email?.split('@')[0] || 'Snow',
     email: authUser?.email || 'talk2icedmist@gmail.com',
-    role: authUser?.email === 'talk2icedmist@gmail.com' || (!authUser && true) ? 'super_admin' : 'member',
+    role: authUser?.email?.toLowerCase() === 'talk2icedmist@gmail.com' ? 'super_admin' : 'member',
     directorateIds: ['dir-dev', 'dir-exec'],
     avatarUrl: authUser?.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
-    title: 'Executive Platform Director',
+    title: authUser?.email?.toLowerCase() === 'talk2icedmist@gmail.com' ? 'Super Admin' : 'Workspace Member',
   };
 
   const handleTaskCreated = (newTask: Task) => {
