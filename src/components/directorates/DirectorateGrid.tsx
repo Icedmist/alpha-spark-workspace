@@ -3,6 +3,7 @@
 import React from 'react';
 import { Directorate, Task, User as UserType } from '../../types';
 import { Users, CheckCircle2, ArrowUpRight, FolderKanban } from 'lucide-react';
+import { getDirectorateIcon } from '../../lib/directorateIcons';
 
 interface DirectorateGridProps {
   directorates: Directorate[];
@@ -18,14 +19,14 @@ export const DirectorateGrid: React.FC<DirectorateGridProps> = ({
   onSelectDirectorate,
 }) => {
   return (
-    <div className="p-6 space-y-6 animate-in w-full">
+    <div className="p-6 space-y-6 animate-in w-full font-sans">
       {/* Header Info Banner */}
       <div className="bg-gradient-to-r from-[#1A1A2E] via-[#E85D04]/20 to-[#0099CC]/20 border border-[#E85D04]/30 rounded-3xl p-6 shadow-2xl backdrop-blur-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="font-display text-2xl font-black text-white italic uppercase tracking-tight flex items-center gap-2">
-            <FolderKanban className="w-6 h-6 text-[#E85D04]" /> Organizational Directorate Infrastructure
+            <FolderKanban className="w-6 h-6 text-[#E85D04]" /> Organizational Directorates
           </h2>
-          <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed font-sans">
             Alpha Spark Workspace categorizes all company workflows into 9 specialized directorates. Click any directorate card below to filter tasks, review head leadership, and inspect task execution throughput.
           </p>
         </div>
@@ -48,6 +49,7 @@ export const DirectorateGrid: React.FC<DirectorateGridProps> = ({
           const completedTasks = dirTasks.filter((t) => t.status === 'completed');
           const completionRate = dirTasks.length > 0 ? Math.round((completedTasks.length / dirTasks.length) * 100) : 100;
           const leadUser = users.find((u) => u.id === dir.leadId);
+          const IconComponent = getDirectorateIcon(dir.code || dir.icon);
 
           return (
             <div
@@ -55,25 +57,29 @@ export const DirectorateGrid: React.FC<DirectorateGridProps> = ({
               onClick={() => onSelectDirectorate(dir.id)}
               className="group bg-[#1A1A2E]/80 hover:bg-[#1A1A2E] border border-white/10 hover:border-[#E85D04]/50 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all cursor-pointer flex flex-col justify-between space-y-4 backdrop-blur-xl"
             >
-              {/* Top Row: Color Badge & Code */}
+              {/* Top Row: Icon Badge & Code */}
               <div>
                 <div className="flex items-center justify-between">
-                  <span
-                    className="px-3 py-1 text-xs font-black uppercase tracking-wider rounded-xl text-white shadow-md"
-                    style={{ backgroundColor: dir.color }}
-                  >
-                    {dir.code}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-2xl bg-[#E85D04]/10 border border-[#E85D04]/30 flex items-center justify-center text-[#E85D04] group-hover:scale-110 group-hover:bg-[#E85D04]/20 transition shadow-inner">
+                      <IconComponent className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-lg bg-white/10 text-white border border-white/10">
+                        {dir.code}
+                      </span>
+                    </div>
+                  </div>
                   <span className="text-slate-500 group-hover:text-[#F4A261] transition">
                     <ArrowUpRight className="w-5 h-5" />
                   </span>
                 </div>
 
                 {/* Directorate Name & Description */}
-                <h3 className="font-display text-lg font-black text-white italic uppercase tracking-tight mt-3 group-hover:text-[#F4A261] transition">
+                <h3 className="font-display text-lg font-black text-white italic uppercase tracking-tight mt-4 group-hover:text-[#F4A261] transition">
                   {dir.name}
                 </h3>
-                <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed font-sans">
                   {dir.description}
                 </p>
               </div>

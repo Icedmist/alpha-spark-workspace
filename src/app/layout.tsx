@@ -4,13 +4,14 @@ import { AuthProvider } from '../context/AuthContext';
 
 export const metadata: Metadata = {
   title: 'Alpha Spark Workspace | AminApps',
-  description: 'The central AI-powered operating system for Alpha Spark — powered by AminApps design system.',
+  description: 'The central organizational workspace for Alpha Spark — powered by AminApps design system.',
   icons: {
     icon: [
+      { url: '/favicon.ico', type: 'image/x-icon' },
       { url: '/icon.svg', type: 'image/svg+xml' },
     ],
-    shortcut: '/icon.svg',
-    apple: '/icon.svg',
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
   },
 };
 
@@ -22,12 +23,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased dark">
       <head>
-        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/icon.svg" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Syne:wght@400..800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Syne:wght@400..800&display=swap"
           rel="stylesheet"
         />
       </head>

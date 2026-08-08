@@ -28,19 +28,20 @@ export type ViewId = 'kanban' | 'tasks' | 'list' | 'calendar' | 'directorates' |
 export default function Home() {
   const { user: authUser, userProfile, loading } = useAuth();
 
-  const [workspace, setWorkspace] = useState<Workspace>({
+  const [workspace] = useState<Workspace>({
     id: 'ws-alpha-spark',
     name: 'Alpha Spark Global',
     slug: 'alpha-spark',
     ownerId: 'usr-snow',
-    logoUrl: '/logo.png',
+    logoUrl: '/assets/logo.png',
     planTier: 'enterprise',
     createdAt: new Date().toISOString(),
   });
 
   const [currentView, setCurrentView] = useState<ViewId>('kanban');
   const [selectedDirectorateId, setSelectedDirectorateId] = useState<string | undefined>(undefined);
-  
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
   const [tasks, setTasks] = useState<Task[]>([]);
   const [directorates, setDirectorates] = useState<Directorate[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -70,12 +71,12 @@ export default function Home() {
   // Loading State
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#1A1A2E] text-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#1A1A2E] text-white flex items-center justify-center font-sans">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#E85D04] to-[#F4A261] flex items-center justify-center shadow-lg glow-orange animate-bounce">
-            <Sparkles className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 rounded-2xl bg-[#E85D04] flex items-center justify-center shadow-lg glow-orange animate-bounce">
+            <img src="/assets/logo.png" alt="Logo" className="w-8 h-8 object-contain" onError={(e) => { (e.target as HTMLImageElement).src = '/logo.png'; }} />
           </div>
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Loading Alpha Spark OS...</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400 font-sans">Loading Alpha Spark OS...</p>
         </div>
       </div>
     );
@@ -89,7 +90,7 @@ export default function Home() {
   const currentUser: User = userProfile || {
     id: authUser?.uid || 'usr-snow',
     workspaceId: 'ws-alpha-spark',
-    displayName: authUser?.displayName || authUser?.email?.split('@')[0] || 'Snow',
+    displayName: authUser?.displayName || authUser?.email?.split('@')[0] || 'Snow (Icedmist)',
     email: authUser?.email || 'talk2icedmist@gmail.com',
     role: authUser?.email?.toLowerCase() === 'talk2icedmist@gmail.com' ? 'super_admin' : 'member',
     directorateIds: ['dir-dev', 'dir-exec'],
@@ -241,6 +242,8 @@ export default function Home() {
         currentView={currentView}
         onNavigate={(v) => setCurrentView(v as ViewId)}
         currentUser={currentUser}
+        isOpenMobile={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
@@ -250,6 +253,7 @@ export default function Home() {
           onOpenWorkspaceModal={() => {}}
           onOpenAuthModal={() => setShowAuthModal(true)}
           onOpenGuide={() => setShowGuide(true)}
+          onToggleMobileSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
           currentUser={currentUser}
           currentWorkspace={workspace}
         />

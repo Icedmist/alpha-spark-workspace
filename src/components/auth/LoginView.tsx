@@ -70,11 +70,20 @@ export const LoginView: React.FC = () => {
       <div className="relative z-10 w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         {/* Left Side: Branding & Info */}
         <div className="lg:col-span-6 space-y-6 text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-[#E85D04]/30 backdrop-blur-md">
-            <Sparkles className="w-4 h-4 text-[#E85D04]" />
-            <span className="text-xs font-bold uppercase tracking-wider text-[#E85D04]">
-              AminApps Platform OS
-            </span>
+          <div className="flex items-center gap-3">
+            <img
+              src="/assets/logo.png"
+              alt="Alpha Spark Logo"
+              className="w-10 h-10 object-contain rounded-xl shadow-lg"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/logo.png';
+              }}
+            />
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-[#E85D04]/30 backdrop-blur-md">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#E85D04]">
+                AminApps Platform OS
+              </span>
+            </div>
           </div>
 
           <div className="space-y-2">
