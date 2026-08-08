@@ -15,6 +15,8 @@ import {
   ShieldCheck,
   X,
   Terminal,
+  HelpCircle,
+  BookOpen,
 } from 'lucide-react';
 import { Directorate, Task, User } from '../../types';
 import { getDirectorateIcon } from '../../lib/directorateIcons';
@@ -27,6 +29,7 @@ interface SidebarProps {
   currentUser?: User;
   isOpenMobile?: boolean;
   onCloseMobile?: () => void;
+  onOpenGuide?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -37,6 +40,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentUser,
   isOpenMobile = false,
   onCloseMobile,
+  onOpenGuide,
 }) => {
   const pathname = usePathname();
   const isSuperAdmin = currentUser?.role === 'super_admin';
@@ -212,8 +216,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {/* Footer Shortcut Info */}
-        <div className="p-4 border-t border-white/10 bg-black/20">
+        {/* Footer Shortcut Info & Onboarding Launcher */}
+        <div className="p-4 border-t border-white/10 bg-black/20 space-y-2">
+          {onOpenGuide && (
+            <button
+              onClick={onOpenGuide}
+              className="w-full p-2.5 bg-[#0099CC]/15 hover:bg-[#0099CC]/25 border border-[#0099CC]/40 rounded-2xl text-xs font-bold text-white flex items-center justify-between transition group shadow-sm"
+            >
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-[#0099CC]" />
+                <span className="font-sans text-xs">Help & Onboarding</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-[#0099CC] group-hover:translate-x-0.5 transition" />
+            </button>
+          )}
+
           <div className="p-3 bg-black/40 border border-white/10 rounded-2xl text-xs space-y-1">
             <div className="flex items-center gap-1.5 text-slate-300 font-bold">
               <Terminal className="w-3.5 h-3.5 text-[#E85D04]" />

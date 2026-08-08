@@ -68,11 +68,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
 
   useEffect(() => {
     refreshData();
-    const completed = localStorage.getItem('alpha_spark_onboarding_completed_v1');
-    if (!completed && (authUser || userProfile)) {
-      setShowGuide(true);
-    }
-  }, [authUser, userProfile]);
+  }, []);
 
   // Global Hotkey Listener (⌘K for commands, N for new task, Esc for closing modals)
   useEffect(() => {
@@ -169,6 +165,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
         currentUser={currentUser}
         isOpenMobile={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        onOpenGuide={() => setShowGuide(true)}
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
