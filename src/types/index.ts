@@ -130,7 +130,7 @@ export interface ActivityLog {
   actorId: string;
   actorName: string;
   action: string;
-  targetType: 'task' | 'directorate' | 'meeting' | 'announcement' | 'report';
+  targetType: 'task' | 'directorate' | 'meeting' | 'announcement' | 'report' | 'user';
   targetTitle: string;
   timestamp: string;
 }

@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Kanban,
@@ -22,8 +24,6 @@ interface SidebarProps {
   tasks: Task[];
   selectedDirectorateId?: string;
   onSelectDirectorate?: (id: string | undefined) => void;
-  currentView?: string;
-  onNavigate?: (view: string) => void;
   currentUser?: User;
   isOpenMobile?: boolean;
   onCloseMobile?: () => void;
@@ -34,29 +34,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
   tasks,
   selectedDirectorateId,
   onSelectDirectorate,
-  currentView = 'dashboard',
-  onNavigate,
   currentUser,
   isOpenMobile = false,
   onCloseMobile,
 }) => {
+  const pathname = usePathname();
   const isSuperAdmin = currentUser?.role === 'super_admin';
 
   const navItems = [
-    { name: 'Dashboard', view: 'dashboard', icon: LayoutDashboard },
-    { name: 'Task Board', view: 'tasks', icon: Kanban },
-    { name: 'Directorates', view: 'directorates', icon: Building2 },
-    { name: 'Calendar & Schedules', view: 'calendar', icon: Calendar },
-    { name: 'Meeting Notes', view: 'meetings', icon: FileText },
-    { name: 'Announcements', view: 'announcements', icon: Megaphone },
-    { name: 'Analytics & Reports', view: 'analytics', icon: BarChart3 },
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    { name: 'Task Board', href: '/tasks', icon: Kanban },
+    { name: 'Directorates', href: '/directorates', icon: Building2 },
+    { name: 'Calendar & Schedules', href: '/calendar', icon: Calendar },
+    { name: 'Meeting Notes', href: '/meetings', icon: FileText },
+    { name: 'Announcements', href: '/announcements', icon: Megaphone },
+    { name: 'Analytics & Reports', href: '/analytics', icon: BarChart3 },
     ...(isSuperAdmin
-      ? [{ name: 'Platform Admin', view: 'admin', icon: ShieldCheck, isSpecial: true }]
+      ? [{ name: 'Platform Admin', href: '/admin', icon: ShieldCheck, isSpecial: true }]
       : []),
   ];
 
-  const handleNavClick = (view: string) => {
-    if (onNavigate) onNavigate(view);
+  const handleNavClick = () => {
     if (onCloseMobile) onCloseMobile();
   };
 
@@ -82,25 +80,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
       >
         {/* Brand logo & Header */}
         <div className="h-16 px-6 flex items-center justify-between border-b border-white/10">
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3 group">
             <img
               src="/assets/logo.png"
               alt="Alpha Spark Logo"
-              className="w-8 h-8 object-contain rounded-lg"
+              className="w-8 h-8 object-contain rounded-lg group-hover:scale-105 transition transform"
               onError={(e) => {
-                // Fallback to /logo.png
                 (e.target as HTMLImageElement).src = '/logo.png';
               }}
             />
             <div>
-              <h1 className="font-display text-base font-extrabold text-white tracking-tight leading-none italic uppercase">
+              <h1 className="font-display text-base font-extrabold text-white tracking-tight leading-none italic uppercase group-hover:text-[#F4A261] transition">
                 ALPHA SPARK
               </h1>
               <span className="text-[9px] font-bold text-[#0099CC] tracking-widest uppercase mt-0.5 block font-sans">
                 AminApps OS
               </span>
             </div>
-          </div>
+          </Link>
 
           {/* Close button for Mobile */}
           {onCloseMobile && (
@@ -122,11 +119,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <nav className="space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = currentView === item.view;
+                const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
                 return (
-                  <button
+                  <Link
                     key={item.name}
-                    onClick={() => handleNavClick(item.view)}
+                    href={item.href}
+                    onClick={handleNavClick}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold tracking-wide transition ${
                       isActive
                         ? item.isSpecial
@@ -158,7 +156,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         }`}
                       />
                     )}
-                  </button>
+                  </Link>
                 );
               })}
             </nav>

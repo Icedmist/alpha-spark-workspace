@@ -10,9 +10,11 @@ import {
   HelpCircle,
   Menu,
   Terminal,
+  AlertTriangle,
 } from 'lucide-react';
 import { Workspace, User as UserType } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import { WorkspaceStorageService } from '../../lib/storage';
 
 interface HeaderProps {
   onOpenAICommand: () => void;
@@ -39,10 +41,21 @@ export const Header: React.FC<HeaderProps> = ({
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
+  // Compute live overdue tasks for automated background alerts
+  const tasks = typeof window !== 'undefined' ? WorkspaceStorageService.getTasks() : [];
+  const overdueTasks = tasks.filter(
+    (t) => new Date(t.dueDate).getTime() < new Date().getTime() && t.status !== 'completed'
+  );
+
   const notifications = [
-    { id: 'n1', text: 'Fatima completed "Course Catalog & Syllabus"', time: '10m ago' },
-    { id: 'n2', text: 'New announcement: Welcome to Alpha Spark OS', time: '1h ago' },
-    { id: 'n3', text: 'Amina started work on "Webinar Flyer"', time: '2h ago' },
+    ...overdueTasks.map((t) => ({
+      id: `ovd-${t.id}`,
+      text: `OVERDUE ALERT: "${t.title}" was due ${new Date(t.dueDate).toLocaleDateString()}`,
+      time: 'Action Required',
+      isOverdue: true,
+    })),
+    { id: 'n1', text: 'Fatima completed "Course Catalog & Syllabus"', time: '10m ago', isOverdue: false },
+    { id: 'n2', text: 'New announcement: Welcome to Alpha Spark OS', time: '1h ago', isOverdue: false },
   ];
 
   const activeUser = userProfile || currentUser;
@@ -75,12 +88,12 @@ export const Header: React.FC<HeaderProps> = ({
           />
           <div className="hidden sm:block">
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-white group-hover:text-[#F4A261] transition">
+              <span className="text-xs font-bold text-white group-hover:text-[#F4A261] transition font-sans">
                 {currentWorkspace.name}
               </span>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </div>
-            <span className="text-[10px] font-extrabold text-[#0099CC] tracking-widest uppercase block">
+            <span className="text-[10px] font-extrabold text-[#0099CC] tracking-widest uppercase block font-sans">
               {currentWorkspace.planTier} Tier
             </span>
           </div>
@@ -97,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Right section: Onboarding Guide, Command Search, Create Task, Notifications, Profile */}
+      {/* Right section */}
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Onboarding Guide trigger */}
         <button
@@ -108,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({
           <HelpCircle className="w-4 h-4 text-[#0099CC]" />
         </button>
 
-        {/* Command Search Trigger (Clean, natural workspace command palette) */}
+        {/* Command Search Trigger */}
         <button
           onClick={onOpenAICommand}
           className="px-3 py-1.5 bg-black/40 hover:bg-white/10 text-white rounded-xl text-xs font-bold flex items-center gap-2 border border-white/10 transition group"
@@ -125,7 +138,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Quick Create Task */}
         <button
           onClick={onOpenCreateTask}
-          className="px-3 py-1.5 bg-[#E85D04] hover:bg-[#E85D04]/90 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-md glow-orange"
+          className="px-3 py-1.5 bg-[#E85D04] hover:bg-[#E85D04]/90 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-md glow-orange font-sans"
         >
           <Plus className="w-4 h-4" />
           <span className="hidden sm:inline uppercase tracking-wider text-xs">New Task</span>
@@ -138,20 +151,37 @@ export const Header: React.FC<HeaderProps> = ({
             className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition relative"
           >
             <Bell className="w-4 h-4" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#E85D04] rounded-full ring-2 ring-[#1A1A2E]"></span>
+            {overdueTasks.length > 0 ? (
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-[#1A1A2E] animate-ping" />
+            ) : (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#E85D04] rounded-full ring-2 ring-[#1A1A2E]" />
+            )}
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-[#1A1A2E] border border-white/10 rounded-2xl shadow-2xl z-50 p-4 animate-in">
-              <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
-                <span className="text-xs font-bold text-white uppercase tracking-wider">Notifications</span>
-                <span className="text-[10px] text-[#0099CC] font-bold">3 unread</span>
+            <div className="absolute right-0 mt-2 w-80 bg-[#1A1A2E] border border-white/10 rounded-2xl shadow-2xl z-50 p-4 animate-in space-y-2">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <span className="text-xs font-bold text-white uppercase tracking-wider font-sans">Notifications</span>
+                {overdueTasks.length > 0 && (
+                  <span className="text-[10px] font-extrabold text-red-400 bg-red-500/20 px-2 py-0.5 rounded border border-red-500/30 flex items-center gap-1 font-sans">
+                    <AlertTriangle className="w-3 h-3" /> {overdueTasks.length} Overdue
+                  </span>
+                )}
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-60 overflow-y-auto">
                 {notifications.map((n) => (
-                  <div key={n.id} className="p-2 rounded-xl bg-black/40 text-xs hover:bg-white/5 transition border border-white/5">
-                    <p className="text-slate-200 font-medium">{n.text}</p>
-                    <span className="text-[10px] text-slate-500">{n.time}</span>
+                  <div
+                    key={n.id}
+                    className={`p-2.5 rounded-xl text-xs transition border font-sans ${
+                      n.isOverdue
+                        ? 'bg-red-500/10 border-red-500/30 text-red-200'
+                        : 'bg-black/40 border-white/5 text-slate-200 hover:bg-white/5'
+                    }`}
+                  >
+                    <p className="font-medium leading-tight">{n.text}</p>
+                    <span className={`text-[10px] block mt-1 ${n.isOverdue ? 'text-red-400 font-bold' : 'text-slate-500'}`}>
+                      {n.time}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -159,7 +189,7 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
 
-        {/* Profile / Auth Menu */}
+        {/* Profile Menu */}
         <div className="relative border-l border-white/10 pl-2 sm:pl-3">
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
@@ -173,7 +203,7 @@ export const Header: React.FC<HeaderProps> = ({
               alt={activeUser.displayName}
               className="w-8 h-8 rounded-full border border-white/10 object-cover ring-2 ring-[#E85D04]"
             />
-            <div className="hidden md:block text-left">
+            <div className="hidden md:block text-left font-sans">
               <span className="text-xs font-bold text-white block leading-tight">
                 {activeUser.displayName}
               </span>
@@ -185,7 +215,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-56 bg-[#1A1A2E] border border-white/10 rounded-2xl shadow-2xl z-50 p-2 animate-in space-y-1">
+            <div className="absolute right-0 mt-2 w-56 bg-[#1A1A2E] border border-white/10 rounded-2xl shadow-2xl z-50 p-2 animate-in space-y-1 font-sans">
               <div className="px-3 py-2 border-b border-white/10">
                 <p className="text-xs font-bold text-white">{activeUser.displayName}</p>
                 <p className="text-[10px] text-slate-400 truncate">{activeUser.email}</p>
@@ -196,7 +226,7 @@ export const Header: React.FC<HeaderProps> = ({
                   logout();
                   setShowProfileMenu(false);
                 }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-400 hover:bg-red-500/10 rounded-xl transition"
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-400 hover:bg-red-500/10 rounded-xl transition font-sans"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Sign Out</span>

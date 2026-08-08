@@ -17,8 +17,10 @@ import {
   Key,
   UserPlus,
   Lock,
+  Terminal,
+  ShieldAlert,
 } from 'lucide-react';
-import { User, Directorate, Task, UserRole } from '../../types';
+import { User, Directorate, Task, UserRole, ActivityLog } from '../../types';
 import { WorkspaceStorageService } from '../../lib/storage';
 import { useAuth } from '../../context/AuthContext';
 import { CreateUserModal } from './CreateUserModal';
@@ -41,6 +43,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({
   const { user } = useAuth();
   const [userList, setUserList] = useState<User[]>(users);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<ActivityLog[]>(() => WorkspaceStorageService.getActivity());
 
   // Strict Super Admin Verification Guard
   const isSuperAdmin = currentUser.role === 'super_admin' || currentUser.email.toLowerCase() === 'talk2icedmist@gmail.com';
@@ -55,6 +58,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({
   const handleRoleChange = (userId: string, newRole: UserRole) => {
     if (!isSuperAdmin) return;
 
+    const targetUser = userList.find((u) => u.id === userId);
     const updatedUsers = userList.map((u) => {
       if (u.id === userId) {
         const updated = { ...u, role: newRole };
@@ -63,13 +67,27 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({
       }
       return u;
     });
+
+    WorkspaceStorageService.logActivity(
+      `changed role of ${targetUser?.displayName || userId} to ${newRole.toUpperCase()}`,
+      'user',
+      targetUser?.email || userId
+    );
+
     setUserList(updatedUsers);
+    setAuditLogs(WorkspaceStorageService.getActivity());
     if (onUsersUpdated) onUsersUpdated();
   };
 
   const handleUserCreated = (newUser: User) => {
     const updatedUsers = WorkspaceStorageService.getUsers();
     setUserList(updatedUsers);
+    WorkspaceStorageService.logActivity(
+      `provisioned new user profile (${newUser.displayName})`,
+      'user',
+      newUser.email
+    );
+    setAuditLogs(WorkspaceStorageService.getActivity());
     if (onUsersUpdated) onUsersUpdated();
   };
 
@@ -82,7 +100,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({
         <h2 className="font-display text-2xl font-black text-white italic uppercase tracking-tight">
           Super Admin Privileges Required
         </h2>
-        <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto">
+        <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto font-sans">
           Access to user provisioning, role allocation, and platform diagnostic controls is restricted exclusively to Super Admin profiles (`talk2icedmist@gmail.com`).
         </p>
       </div>
@@ -90,7 +108,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({
   }
 
   return (
-    <div className="p-6 space-y-6 animate-in w-full">
+    <div className="p-6 space-y-6 animate-in w-full font-sans">
       {/* Top Banner */}
       <div className="relative overflow-hidden bg-gradient-to-r from-[#1A1A2E] via-[#E85D04]/20 to-purple-900/30 border border-[#E85D04]/40 rounded-3xl p-8 shadow-2xl backdrop-blur-xl">
         <div className="absolute -top-10 -right-10 w-48 h-48 bg-[#E85D04]/20 rounded-full blur-3xl pointer-events-none" />
@@ -182,7 +200,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({
         </div>
       </div>
 
-      {/* Main Section: User Role Management & Provisioning */}
+      {/* Main Section: User Role Management & Security Audit Stream */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* User Roles & Access Control */}
         <div className="lg:col-span-2 bg-[#1A1A2E]/80 border border-white/10 rounded-3xl p-6 backdrop-blur-xl shadow-2xl space-y-4">
@@ -254,60 +272,48 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({
           </div>
         </div>
 
-        {/* Platform System Diagnostics */}
+        {/* Security Audit Log Stream */}
         <div className="bg-[#1A1A2E]/80 border border-white/10 rounded-3xl p-6 backdrop-blur-xl shadow-2xl space-y-6">
           <div>
             <h2 className="font-display text-lg font-black text-white uppercase italic tracking-tight flex items-center gap-2">
-              <Cpu className="w-5 h-5 text-[#0099CC]" />
-              Platform Diagnostics
+              <ShieldAlert className="w-5 h-5 text-[#E85D04]" />
+              Security Audit Stream
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Live serverless execution metrics.
+              Real-time security and admin event logging.
             </p>
           </div>
 
-          <div className="space-y-4">
-            <div className="p-4 rounded-2xl bg-black/40 border border-white/5 space-y-2">
-              <div className="flex justify-between text-xs font-bold">
-                <span className="text-slate-300">AI Command API (⌘K)</span>
-                <span className="text-[#0099CC]">Active / 1,000 req/mo</span>
-              </div>
-              <div className="h-2 bg-black/60 rounded-full overflow-hidden border border-white/5">
-                <div className="h-full bg-gradient-to-r from-[#0099CC] to-[#E85D04] rounded-full w-[35%]" />
-              </div>
-              <p className="text-[10px] text-slate-500">Gemini Pro 1.5 Powered Parsing</p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-black/40 border border-white/5 space-y-2">
-              <div className="flex justify-between text-xs font-bold">
-                <span className="text-slate-300">Firestore Realtime Listener</span>
-                <span className="text-emerald-400">Connected (4 collections)</span>
-              </div>
-              <div className="h-2 bg-black/60 rounded-full overflow-hidden border border-white/5">
-                <div className="h-full bg-emerald-500 rounded-full w-[100%]" />
-              </div>
-              <p className="text-[10px] text-slate-500">Dual Sync (Firestore + LocalStorage)</p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-black/40 border border-white/5 space-y-2">
-              <div className="flex justify-between text-xs font-bold">
-                <span className="text-slate-300">Firebase Auth Identity</span>
-                <span className="text-[#F4A261]">OAuth2 & Credentials</span>
-              </div>
-              <div className="h-2 bg-black/60 rounded-full overflow-hidden border border-white/5">
-                <div className="h-full bg-[#F4A261] rounded-full w-[85%]" />
-              </div>
-              <p className="text-[10px] text-slate-500">Super Admin Provisioning Enabled</p>
-            </div>
+          <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+            {auditLogs.length === 0 ? (
+              <p className="text-xs text-slate-500 italic">No security events logged yet.</p>
+            ) : (
+              auditLogs.map((log) => (
+                <div key={log.id} className="p-3 rounded-2xl bg-black/40 border border-white/5 space-y-1">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-bold text-white flex items-center gap-1.5">
+                      <Terminal className="w-3.5 h-3.5 text-[#0099CC]" />
+                      {log.actorName}
+                    </span>
+                    <span className="text-[9px] text-slate-400">
+                      {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300">
+                    <span className="text-[#E85D04] font-bold">{log.action}</span> on <span className="font-mono text-white text-[11px]">{log.targetTitle}</span>
+                  </p>
+                </div>
+              ))
+            )}
           </div>
 
           <div className="p-4 rounded-2xl bg-gradient-to-br from-[#E85D04]/10 to-[#0099CC]/10 border border-[#E85D04]/30 text-xs space-y-1">
             <div className="flex items-center gap-2 font-bold text-white">
               <CheckCircle2 className="w-4 h-4 text-[#E85D04]" />
-              AminApps OS Environment Status
+              Audit Security Engine
             </div>
             <p className="text-[11px] text-slate-300 leading-relaxed">
-              All 9 Directorates are synchronized with production Google Fonts (<span className="font-display italic text-[#F4A261]">Syne</span> and <span className="font-sans font-bold">Inter</span>).
+              All user creations, role alterations, and task deletions are immutably logged for platform accountability.
             </p>
           </div>
         </div>
