@@ -87,6 +87,32 @@ export class WorkspaceStorageService {
     FirestoreService.seedInitialFirestoreData().catch(console.error);
   }
 
+  static clearAndResetDatabase(): void {
+    if (typeof window === 'undefined') return;
+    Object.values(KEYS).forEach((key) => localStorage.removeItem(key));
+    setStorage(KEYS.WORKSPACES, [INITIAL_WORKSPACE]);
+    setStorage(KEYS.CURRENT_WORKSPACE, INITIAL_WORKSPACE.id);
+    setStorage(KEYS.USERS, INITIAL_USERS);
+    setStorage(KEYS.DIRECTORATES, INITIAL_DIRECTORATES);
+    setStorage(KEYS.TASKS, INITIAL_TASKS);
+    setStorage(KEYS.COMMENTS, INITIAL_COMMENTS);
+    setStorage(KEYS.MEETINGS, INITIAL_MEETINGS);
+    setStorage(KEYS.ANNOUNCEMENTS, INITIAL_ANNOUNCEMENTS);
+    setStorage(KEYS.ACTIVITY, [
+      {
+        id: `act-${Date.now()}`,
+        workspaceId: INITIAL_WORKSPACE.id,
+        actorId: 'usr-snow',
+        actorName: 'Snow (Icedmist)',
+        action: 'reset and re-seeded workspace database',
+        targetType: 'report',
+        targetTitle: 'Clean Real Data System Reset',
+        timestamp: new Date().toISOString(),
+      },
+      ...INITIAL_ACTIVITY,
+    ]);
+  }
+
   // Workspaces
   static getWorkspaces(): Workspace[] {
     return getStorage<Workspace[]>(KEYS.WORKSPACES, [INITIAL_WORKSPACE]);

@@ -11,7 +11,13 @@ import {
   X,
   CheckCircle2,
   HelpCircle,
+  Terminal,
+  AtSign,
+  UserPlus,
+  Layers,
+  RotateCcw,
 } from 'lucide-react';
+import { WorkspaceStorageService } from '../../lib/storage';
 
 interface OnboardingGuideProps {
   isOpen: boolean;
@@ -33,62 +39,77 @@ export const OnboardingGuide: React.FC<OnboardingGuideProps> = ({
   const steps = [
     {
       title: 'Welcome to Alpha Spark OS',
-      subtitle: 'Powered by AminApps Design System',
+      subtitle: 'Production Real-Data Workspace',
       badge: 'Getting Started',
-      icon: Sparkles,
+      icon: Layers,
       iconColor: 'text-[#E85D04]',
       bgGlow: 'from-[#E85D04]/20 to-[#0099CC]/20',
       description:
-        'Alpha Spark OS is your central AI-powered workspace for managing Software Engineering, Teaching, Graphic Design, Finance, HR, and Operations.',
+        'Alpha Spark OS is your central operating platform for coordinating tasks across Software Engineering, Teaching, Graphic Design, Finance, HR, and Operations.',
       highlights: [
-        'Real-time Firestore data sync across team members',
-        'Vibrant AminApps design tokens with Syne & Inter typography',
-        'Multi-directorate workflow management',
+        'Real-time workspace state persistence with Firestore cloud sync',
+        'Modern, dark-glass visual design powered by Noto Sans typography',
+        'Multi-directorate organization with distinct team leads and colors',
       ],
     },
     {
-      title: 'AI Command Bar (⌘K)',
-      subtitle: 'Natural Language Task Control',
-      badge: 'AI Assistant',
-      icon: Sparkles,
-      iconColor: 'text-amber-300',
-      bgGlow: 'from-amber-500/20 to-[#E85D04]/20',
-      description:
-        'Press ⌘K or click "AI Manager" to execute commands, create tasks automatically, filter overdue workstreams, or generate analytics reports.',
-      highlights: [
-        'Type "Create urgent task for Fatima to review syllabus"',
-        'Type "Show overdue tasks in Engineering"',
-        'Type "Generate weekly progress report"',
-      ],
-    },
-    {
-      title: 'Task Matrix & Directorate Grid',
-      subtitle: 'Structured Workflow Operations',
+      title: 'Directorates & Team Structure',
+      subtitle: 'Segmented Departmental Workstreams',
       badge: 'Workstreams',
-      icon: Kanban,
+      icon: Building2,
       iconColor: 'text-[#0099CC]',
       bgGlow: 'from-[#0099CC]/20 to-[#F4A261]/20',
       description:
-        'Switch seamlessly between Kanban board view, List matrix, Calendar schedules, and Directorate progress bars.',
+        'Work is organized into dedicated Directorates (DEV, EDU, DSG, MKT, PRT, FIN, HR, OPS, EXEC). Each Directorate has assigned leads, team members, and target metrics.',
       highlights: [
-        'Filter tasks by specific Directorate or Priority',
-        'Manage subtasks, attachments, and due dates',
-        'Track Directorate health and completion rates',
+        'Filter tasks by specific Directorate or priority level',
+        'Monitor Directorate completion rates in Analytics',
+        'Assign lead oversight to ensure accountability',
       ],
     },
     {
-      title: 'Super Admin & Real Auth',
-      subtitle: 'Full Platform Usage Control',
-      badge: 'Platform Admin',
+      title: 'AI Command Engine (⌘K)',
+      subtitle: 'Natural Language Task Processing',
+      badge: 'AI Powered',
+      icon: Terminal,
+      iconColor: 'text-amber-300',
+      bgGlow: 'from-amber-500/20 to-[#E85D04]/20',
+      description:
+        'Press ⌘K anytime to open the Command Palette. Powered by Google Gemini 1.5 Flash, you can create tasks or filter views using plain language.',
+      highlights: [
+        'Example: "Create high priority task for Fatima to review syllabus"',
+        'Example: "Show overdue tasks in Engineering"',
+        'Example: "Generate weekly progress report"',
+      ],
+    },
+    {
+      title: 'Task Matrix, Comments & @Mentions',
+      subtitle: 'Interactive Collaboration & Mobile Touch',
+      badge: 'Collaboration',
+      icon: AtSign,
+      iconColor: 'text-[#F4A261]',
+      bgGlow: 'from-[#F4A261]/20 to-[#0099CC]/20',
+      description:
+        'Manage work on Kanban boards, List views, or Calendar schedules. Use live comment threads with @mentions to notify team members instantly.',
+      highlights: [
+        'Type @ in comment threads to tag colleagues (@Fatima, @Amina)',
+        'One-tap chevron buttons for rapid mobile status transitions',
+        'Automated overdue alerts and visual warning badges',
+      ],
+    },
+    {
+      title: 'Super Admin Security & Real Auth',
+      subtitle: 'Platform User Provisioning & Audit Stream',
+      badge: 'Super Admin',
       icon: ShieldCheck,
       iconColor: 'text-emerald-400',
       bgGlow: 'from-emerald-500/20 to-[#1A1A2E]',
       description:
-        'As a Super Admin, you have full authority to manage user roles, directorate assignments, platform API usage, and system health metrics.',
+        'Restricted to Super Admin credentials (talk2icedmist@gmail.com). Provision new user accounts, assign directorate roles, view security audit streams, and reset database storage.',
       highlights: [
-        'Firebase Authentication integration for real user profiles',
-        'Super Admin Panel for managing team roles & quotas',
-        'Firestore security rules & live storage backup',
+        'Only Super Admins can provision new users and alter access roles',
+        'Immutable Security Audit Stream logs all administrative actions',
+        'Clean & Reset Database button flushes storage to clean real data',
       ],
     },
   ];
@@ -111,7 +132,7 @@ export const OnboardingGuide: React.FC<OnboardingGuideProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in font-sans">
       <div className="relative w-full max-w-xl bg-[#1A1A2E] border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden">
         {/* Ambient background glow */}
         <div
@@ -170,8 +191,8 @@ export const OnboardingGuide: React.FC<OnboardingGuideProps> = ({
             ))}
           </div>
 
-          {/* Action shortcut triggers on specific steps */}
-          {currentStep === 1 && onOpenAICommand && (
+          {/* Interactive triggers for relevant steps */}
+          {currentStep === 2 && onOpenAICommand && (
             <button
               onClick={() => {
                 onClose();
@@ -179,22 +200,37 @@ export const OnboardingGuide: React.FC<OnboardingGuideProps> = ({
               }}
               className="w-full py-2.5 bg-gradient-to-r from-[#E85D04] to-[#F4A261] text-white text-xs font-bold uppercase tracking-wider rounded-xl hover:opacity-95 transition shadow-lg glow-orange flex items-center justify-center gap-2"
             >
-              <Sparkles className="w-4 h-4 text-amber-200" />
-              Try AI Manager Now (⌘K)
+              <Terminal className="w-4 h-4 text-amber-200" />
+              Open AI Command Bar (⌘K)
             </button>
           )}
 
-          {currentStep === 3 && onNavigateToAdmin && (
-            <button
-              onClick={() => {
-                onClose();
-                onNavigateToAdmin();
-              }}
-              className="w-full py-2.5 bg-[#0099CC] text-white text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-[#0099CC]/90 transition shadow-md glow-blue flex items-center justify-center gap-2"
-            >
-              <ShieldCheck className="w-4 h-4 text-emerald-300" />
-              Open Platform Admin Panel
-            </button>
+          {currentStep === 4 && (
+            <div className="flex items-center gap-2">
+              {onNavigateToAdmin && (
+                <button
+                  onClick={() => {
+                    onClose();
+                    onNavigateToAdmin();
+                  }}
+                  className="flex-1 py-2.5 bg-[#0099CC] text-white text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-[#0099CC]/90 transition shadow-md flex items-center justify-center gap-2"
+                >
+                  <UserPlus className="w-4 h-4 text-emerald-300" />
+                  Open Admin Panel
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  if (confirm('Reset workspace database to clean production real data?')) {
+                    WorkspaceStorageService.clearAndResetDatabase();
+                    window.location.reload();
+                  }
+                }}
+                className="px-4 py-2.5 bg-black/50 text-slate-300 hover:text-white border border-white/10 text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-white/10 transition flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-4 h-4 text-[#0099CC]" /> Reset DB
+              </button>
+            </div>
           )}
         </div>
 
