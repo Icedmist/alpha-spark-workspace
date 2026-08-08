@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Allow read/write access to authenticated users
+    match /tasks/{taskId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /directorates/{dirId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /users/{userId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /meetings/{meetingId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /workspaces/{wsId} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}

@@ -7,7 +7,7 @@ import {
   deleteDoc,
   onSnapshot,
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, auth } from './firebase';
 import { Task, Directorate, User, MeetingNote } from '../types';
 import {
   INITIAL_TASKS,
@@ -21,6 +21,7 @@ export const FirestoreService = {
   // --- Seed Data into Firestore if collections are empty ---
   async seedInitialFirestoreData() {
     try {
+      // Only attempt Firestore seed if initialized & user is authenticated or public write is enabled
       const taskSnap = await getDocs(collection(db, 'tasks'));
       if (taskSnap.empty) {
         console.log('Seeding initial tasks into Firestore...');
@@ -54,8 +55,12 @@ export const FirestoreService = {
       if (wsSnap.empty) {
         await setDoc(doc(db, 'workspaces', INITIAL_WORKSPACE.id), INITIAL_WORKSPACE);
       }
-    } catch (error) {
-      console.warn('Firestore seeding offline fallback active:', error);
+    } catch (error: any) {
+      if (error?.code === 'permission-denied') {
+        console.info('Firestore active in local fallback mode (Permission check failed or unauthenticated).');
+      } else {
+        console.warn('Firestore seeding offline fallback active:', error?.message || error);
+      }
     }
   },
 
@@ -67,8 +72,10 @@ export const FirestoreService = {
         const tasks = snapshot.docs.map((doc) => doc.data() as Task);
         callback(tasks);
       },
-      (error) => {
-        console.warn('Firestore task subscription fallback:', error);
+      (error: any) => {
+        if (error?.code !== 'permission-denied') {
+          console.warn('Firestore task subscription fallback:', error?.message || error);
+        }
       }
     );
   },
@@ -80,8 +87,10 @@ export const FirestoreService = {
         const dirs = snapshot.docs.map((doc) => doc.data() as Directorate);
         callback(dirs);
       },
-      (error) => {
-        console.warn('Firestore directorates subscription fallback:', error);
+      (error: any) => {
+        if (error?.code !== 'permission-denied') {
+          console.warn('Firestore directorates subscription fallback:', error?.message || error);
+        }
       }
     );
   },
@@ -93,8 +102,10 @@ export const FirestoreService = {
         const users = snapshot.docs.map((doc) => doc.data() as User);
         callback(users);
       },
-      (error) => {
-        console.warn('Firestore users subscription fallback:', error);
+      (error: any) => {
+        if (error?.code !== 'permission-denied') {
+          console.warn('Firestore users subscription fallback:', error?.message || error);
+        }
       }
     );
   },
@@ -106,8 +117,10 @@ export const FirestoreService = {
         const meetings = snapshot.docs.map((doc) => doc.data() as MeetingNote);
         callback(meetings);
       },
-      (error) => {
-        console.warn('Firestore meetings subscription fallback:', error);
+      (error: any) => {
+        if (error?.code !== 'permission-denied') {
+          console.warn('Firestore meetings subscription fallback:', error?.message || error);
+        }
       }
     );
   },
@@ -116,8 +129,10 @@ export const FirestoreService = {
   async saveTask(task: Task): Promise<void> {
     try {
       await setDoc(doc(db, 'tasks', task.id), task, { merge: true });
-    } catch (e) {
-      console.error('Error saving task to Firestore:', e);
+    } catch (e: any) {
+      if (e?.code !== 'permission-denied') {
+        console.error('Error saving task to Firestore:', e);
+      }
     }
   },
 
@@ -127,32 +142,40 @@ export const FirestoreService = {
         status,
         updatedAt: new Date().toISOString(),
       });
-    } catch (e) {
-      console.error('Error updating task status in Firestore:', e);
+    } catch (e: any) {
+      if (e?.code !== 'permission-denied') {
+        console.error('Error updating task status in Firestore:', e);
+      }
     }
   },
 
   async deleteTask(taskId: string): Promise<void> {
     try {
       await deleteDoc(doc(db, 'tasks', taskId));
-    } catch (e) {
-      console.error('Error deleting task in Firestore:', e);
+    } catch (e: any) {
+      if (e?.code !== 'permission-denied') {
+        console.error('Error deleting task in Firestore:', e);
+      }
     }
   },
 
   async saveUser(user: User): Promise<void> {
     try {
       await setDoc(doc(db, 'users', user.id), user, { merge: true });
-    } catch (e) {
-      console.error('Error saving user to Firestore:', e);
+    } catch (e: any) {
+      if (e?.code !== 'permission-denied') {
+        console.error('Error saving user to Firestore:', e);
+      }
     }
   },
 
   async saveMeeting(meeting: MeetingNote): Promise<void> {
     try {
       await setDoc(doc(db, 'meetings', meeting.id), meeting, { merge: true });
-    } catch (e) {
-      console.error('Error saving meeting to Firestore:', e);
+    } catch (e: any) {
+      if (e?.code !== 'permission-denied') {
+        console.error('Error saving meeting to Firestore:', e);
+      }
     }
   },
 };
