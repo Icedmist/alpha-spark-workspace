@@ -166,6 +166,22 @@ export class WorkspaceStorageService {
     return all.filter((d) => d.workspaceId === targetWs || d.workspaceId === 'ws-alpha-spark');
   }
 
+  static addDirectorate(data: Omit<Directorate, 'id'>): Directorate {
+    const newDir: Directorate = {
+      ...data,
+      id: `dir-${Date.now()}`,
+    };
+    const all = getStorage<Directorate[]>(KEYS.DIRECTORATES, INITIAL_DIRECTORATES);
+    all.push(newDir);
+    setStorage(KEYS.DIRECTORATES, all);
+
+    this.logActivity('created directorate', 'directorate', newDir.name);
+
+    // Sync to Firestore
+    FirestoreService.saveDirectorate(newDir).catch(console.error);
+    return newDir;
+  }
+
   // Tasks
   static getTasks(wsId?: string): Task[] {
     const all = getStorage<Task[]>(KEYS.TASKS, INITIAL_TASKS);

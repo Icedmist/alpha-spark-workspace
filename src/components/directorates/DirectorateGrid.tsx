@@ -1,23 +1,34 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Directorate, Task, User as UserType } from '../../types';
-import { Users, CheckCircle2, ArrowUpRight, FolderKanban } from 'lucide-react';
+import { ArrowUpRight, FolderKanban, PlusCircle } from 'lucide-react';
 import { getDirectorateIcon } from '../../lib/directorateIcons';
+import { CreateDirectorateModal } from './CreateDirectorateModal';
 
 interface DirectorateGridProps {
   directorates: Directorate[];
   tasks: Task[];
   users: UserType[];
+  currentUser?: UserType;
   onSelectDirectorate: (dirId: string) => void;
+  onDirectorateCreated?: (dir: Directorate) => void;
 }
 
 export const DirectorateGrid: React.FC<DirectorateGridProps> = ({
   directorates,
   tasks,
   users,
+  currentUser,
   onSelectDirectorate,
+  onDirectorateCreated,
 }) => {
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const isSuperAdmin =
+    currentUser?.role === 'super_admin' ||
+    currentUser?.email?.toLowerCase() === 'talk2icedmist@gmail.com';
+
   return (
     <div className="p-6 space-y-6 animate-in w-full font-sans">
       {/* Header Info Banner */}
@@ -30,7 +41,7 @@ export const DirectorateGrid: React.FC<DirectorateGridProps> = ({
             Alpha Spark Workspace categorizes all company workflows into 9 specialized directorates. Click any directorate card below to filter tasks, review head leadership, and inspect task execution throughput.
           </p>
         </div>
-        <div className="flex items-center gap-4 text-xs font-bold text-slate-300">
+        <div className="flex flex-col sm:flex-row items-center gap-4 text-xs font-bold text-slate-300">
           <div className="bg-black/40 border border-white/10 px-4 py-2.5 rounded-2xl text-center">
             <span className="block text-[#0099CC] text-lg font-display font-black">{directorates.length}</span>
             <span className="text-[9px] text-slate-400 uppercase tracking-widest">Directorates</span>
@@ -39,6 +50,14 @@ export const DirectorateGrid: React.FC<DirectorateGridProps> = ({
             <span className="block text-[#E85D04] text-lg font-display font-black">{tasks.length}</span>
             <span className="text-[9px] text-slate-400 uppercase tracking-widest">Active Tasks</span>
           </div>
+          {isSuperAdmin && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#E85D04] to-[#F4A261] hover:opacity-95 text-white rounded-2xl text-xs font-bold uppercase tracking-wider transition shadow-lg glow-orange"
+            >
+              <PlusCircle className="w-4 h-4" /> New Directorate
+            </button>
+          )}
         </div>
       </div>
 
@@ -123,6 +142,18 @@ export const DirectorateGrid: React.FC<DirectorateGridProps> = ({
           );
         })}
       </div>
+
+      {/* New Directorate Modal */}
+      <CreateDirectorateModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        users={users}
+        isSuperAdmin={isSuperAdmin}
+        onDirectorateCreated={(dir) => {
+          setShowCreateModal(false);
+          if (onDirectorateCreated) onDirectorateCreated(dir);
+        }}
+      />
     </div>
   );
 };

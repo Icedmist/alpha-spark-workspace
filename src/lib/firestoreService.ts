@@ -178,4 +178,14 @@ export const FirestoreService = {
       }
     }
   },
+
+  async saveDirectorate(directorate: Directorate): Promise<void> {
+    try {
+      await setDoc(doc(db, 'directorates', directorate.id), directorate, { merge: true });
+    } catch (e: any) {
+      if (e?.code !== 'permission-denied') {
+        console.error('Error saving directorate to Firestore:', e);
+      }
+    }
+  },
 };

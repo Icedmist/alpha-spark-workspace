@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Task, Directorate, User, WeeklyReport, ActivityLog } from '../../types';
 import { WorkspaceStorageService } from '../../lib/storage';
+import { Leaderboard } from './Leaderboard';
 
 interface ReportsViewProps {
   tasks: Task[];
@@ -315,6 +316,9 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
             })}
         </div>
       </div>
+
+      {/* Task Completion Leaderboard */}
+      <Leaderboard tasks={tasks} users={users} />
 
       {/* Generated report */}
       {report && (

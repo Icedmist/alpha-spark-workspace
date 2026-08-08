@@ -10,15 +10,17 @@ export default function DirectoratesPage() {
 
   return (
     <AppShell>
-      {({ directorates, tasks, users, setSelectedDirectorateId }) => (
+      {({ directorates, tasks, users, currentUser, setSelectedDirectorateId, refreshData }) => (
         <DirectorateGrid
           directorates={directorates}
           tasks={tasks}
           users={users}
+          currentUser={currentUser}
           onSelectDirectorate={(dirId) => {
             setSelectedDirectorateId(dirId);
             router.push('/tasks');
           }}
+          onDirectorateCreated={refreshData}
         />
       )}
     </AppShell>
